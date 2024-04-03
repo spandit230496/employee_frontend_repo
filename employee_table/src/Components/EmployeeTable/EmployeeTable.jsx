@@ -16,7 +16,7 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    TextField
+    TextField,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -35,7 +35,7 @@ const EmployeeTable = () => {
     const [toEdit, setToEdit] = useState(false);
     const [showAddColumnModal, setShowAddColumnModal] = useState(false);
     const [newColumnName, setNewColumnName] = useState("");
-    const [columns, setColumns] = useState([]); 
+    const [columns, setColumns] = useState([]);
     const dispatch = useDispatch();
     const isGenerated = useSelector((state) => state?.employeeData?.generated);
 
@@ -101,17 +101,27 @@ const EmployeeTable = () => {
     const handleModalClose = () => {
         setShowModal(false);
     };
-
+    
+    const updateEmployee = async (row) => {
+        try {
+            const res = await axios.post(`${HOSTNAME}/updatedata`, { row });
+            getData();
+            toast("Data updated successfully");
+        } catch (error) {
+            toast("Something went wrong");
+            console.log(error);
+        }
+    };
     const saveEmployee = async (row) => {
         try {
-            const res = await axios.post(`${HOSTNAME}/saveemployee`, { row })
-            getData()
-            toast("Data added successfully")
+            const res = await axios.post(`${HOSTNAME}/saveemployee`, { row });
+            getData();
+            toast("Data added successfully");
         } catch (error) {
-            toast("Something went wrong")
-            console.log(error)
+            toast("Something went wrong");
+            console.log(error);
         }
-    }
+    };
 
     const handleAddColumn = () => {
         setShowAddColumnModal(true);
@@ -119,32 +129,65 @@ const EmployeeTable = () => {
 
     const handleCloseAddColumnModal = () => {
         setShowAddColumnModal(false);
-        setNewColumnName(""); 
+        setNewColumnName("");
     };
 
     const handleAddColumnSubmit = async () => {
         try {
-            const addedColumnName = await axios.post(`${HOSTNAME}/addcolumn`, { columnName: newColumnName });
+            const addedColumnName = await axios.post(`${HOSTNAME}/addcolumn`, {
+                columnName: newColumnName,
+            });
             toast("Column added successfully");
             setColumns([...columns, addedColumnName]);
             setShowAddColumnModal(false);
-            setNewColumnName(""); 
+            setNewColumnName("");
         } catch (error) {
             toast("Something went wrong");
             console.error("Error adding column:", error);
         }
-    }
+    };
 
     return (
         <Container maxWidth="lg">
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                <Typography variant="h5" component="div">Employee List</Typography>
-                <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={addEmployee}>Add Employee</Button>
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
+                }}
+            >
+                <Typography variant="h5" component="div">
+                    Employee List
+                </Typography>
+                <Button
+                    variant="contained"
+                    startIcon={<AddCircleOutlineIcon />}
+                    onClick={addEmployee}
+                >
+                    Add Employee
+                </Button>
             </Box>
-            <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mb: 2 }}>
-                <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAddColumn}>Add Column</Button>
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    mb: 2,
+                }}
+            >
+                <Button
+                    variant="contained"
+                    startIcon={<AddCircleOutlineIcon />}
+                    onClick={handleAddColumn}
+                >
+                    Add Column
+                </Button>
             </Box>
-            <Dialog open={showAddColumnModal} onClose={handleCloseAddColumnModal}>
+            <Dialog
+                open={showAddColumnModal}
+                onClose={handleCloseAddColumnModal}
+            >
                 <DialogTitle>Add New Column</DialogTitle>
                 <DialogContent>
                     <TextField
@@ -163,7 +206,8 @@ const EmployeeTable = () => {
                 open={showModal}
                 handleClose={handleModalClose}
                 addEmployee={addEmployee}
-                handleSave={saveEmployee}
+                handleSave={updateEmployee}
+                saveEmployee={saveEmployee}
                 toEdit={toEdit}
             />
             <Box sx={{ overflowX: "auto" }}>
@@ -173,8 +217,16 @@ const EmployeeTable = () => {
                             <TableHead>
                                 <TableRow>
                                     {columns.map((column) => (
+                                        
                                         <TableCell key={column}>
-                                            <Typography>{column}</Typography>
+                                            {console.log(column,"colopioiojioj")}
+                                            {typeof column === "string" ? (
+                                                <Typography variant="body1">
+                                                    {column.toUpperCase()}
+                                                </Typography>
+                                            ) : (
+                                                column
+                                            )}
                                         </TableCell>
                                     ))}
                                     <TableCell>ACTIONS</TableCell>
@@ -199,7 +251,11 @@ const EmployeeTable = () => {
                                             <Button
                                                 variant="contained"
                                                 color="error"
-                                                onClick={() => handleDelete(row["employeeid"])}
+                                                onClick={() =>
+                                                    handleDelete(
+                                                        row["employeeid"]
+                                                    )
+                                                }
                                             >
                                                 Delete
                                             </Button>

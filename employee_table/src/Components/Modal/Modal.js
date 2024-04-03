@@ -3,7 +3,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } 
 import { useSelector,useDispatch } from 'react-redux';
 import { setUpdated } from '../../Redux/EmployeeDetailSlice';
 
-const EditEmployeeModal = ({ open, handleClose, handleSave,toEdit,saveEmployee }) => {
+const EditEmployeeModal = ({ open, handleClose, handleSave,toEdit ,saveEmployee}) => {
     const [editedEmployee, setEditedEmployee] = useState({});
     const employee=useSelector((state) => state?.initialState)
     const dispatch = useDispatch();
@@ -14,8 +14,8 @@ const EditEmployeeModal = ({ open, handleClose, handleSave,toEdit,saveEmployee }
     const handleInputChange = (e, key) => {
         setEditedEmployee({ ...editedEmployee, [key]: e.target.value });
     };
-
     const addEmployee = () => {
+        
         saveEmployee(editedEmployee);
         dispatch(setUpdated(true));
         handleClose();
