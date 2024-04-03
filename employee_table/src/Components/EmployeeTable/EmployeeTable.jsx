@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import HOSTNAME from "../../HOSTANAME";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {
     Table,
     TableBody,
@@ -29,6 +30,7 @@ import Chart from "../Charts/Charts";
 
 const EmployeeTable = () => {
     const [data, setData] = useState([]);
+    const [hover, setHover] = useState(false);
     const [limit, setLimit] = useState(10);
     const [offset, setOffset] = useState(0);
     const [showModal, setShowModal] = useState(false);
@@ -38,6 +40,15 @@ const EmployeeTable = () => {
     const [columns, setColumns] = useState([]);
     const dispatch = useDispatch();
     const isGenerated = useSelector((state) => state?.employeeData?.generated);
+    const [hoveredColumn, setHoveredColumn] = useState(null);
+
+    const handleMouseEnter = (index) => {
+        setHoveredColumn(index);
+    };
+
+    const handleMouseLeave = () => {
+        setHoveredColumn(null);
+    };
 
     useEffect(() => {
         if (isGenerated) {
@@ -101,7 +112,17 @@ const EmployeeTable = () => {
     const handleModalClose = () => {
         setShowModal(false);
     };
-    
+    const handleDeleteColumn = async (columnName) => {
+        try {
+            await axios.post(`${HOSTNAME}/deletecolumn`, { columnName });
+            getData();
+            toast("Column deleted successfully");
+        } catch (error) {
+            toast("Something went wrong");
+            console.log(error);
+        }
+    };
+
     const updateEmployee = async (row) => {
         try {
             const res = await axios.post(`${HOSTNAME}/updatedata`, { row });
@@ -216,17 +237,35 @@ const EmployeeTable = () => {
                         <>
                             <TableHead>
                                 <TableRow>
-                                    {columns.map((column) => (
-                                        
+                                    {columns.map((column, index) => (
                                         <TableCell key={column}>
-                                            {console.log(column,"colopioiojioj")}
-                                            {typeof column === "string" ? (
-                                                <Typography variant="body1">
-                                                    {column.toUpperCase()}
-                                                </Typography>
-                                            ) : (
-                                                column
-                                            )}
+                                            <div
+                                                onMouseEnter={() =>
+                                                    handleMouseEnter(index)
+                                                }
+                                                onMouseLeave={() =>
+                                                    handleMouseLeave(index)
+                                                }
+                                            >
+                                                {typeof column === "string" ? (
+                                                    <Typography variant="body1">
+                                                        {column.toUpperCase()}
+                                                    </Typography>
+                                                ) : (
+                                                    column
+                                                )}
+                                                {hoveredColumn === index &&
+                                                typeof column === "string" ? (
+                                                    <DeleteIcon
+                                                        sx={{ color: "red" }}
+                                                        onClick={() =>
+                                                            handleDeleteColumn(
+                                                                column
+                                                            )
+                                                        }
+                                                    />
+                                                ) : null}
+                                            </div>
                                         </TableCell>
                                     ))}
                                     <TableCell>ACTIONS</TableCell>
