@@ -12,6 +12,11 @@ import {
     Typography,
     Container,
     Grid,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField
 } from "@mui/material";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -19,7 +24,7 @@ import { setEditableData } from "../../Redux/EmployeeDetailSlice";
 import { useDispatch, useSelector } from "react-redux";
 import EditEmployeeModal from "../Modal/Modal";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import { setEmployeeData ,setUpdated} from "../../Redux/EmployeeDetailSlice";
+import { setEmployeeData, setUpdated } from "../../Redux/EmployeeDetailSlice";
 import Chart from "../Charts/Charts";
 
 const EmployeeTable = () => {
@@ -28,6 +33,9 @@ const EmployeeTable = () => {
     const [offset, setOffset] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [toEdit, setToEdit] = useState(false);
+    const [showAddColumnModal, setShowAddColumnModal] = useState(false);
+    const [newColumnName, setNewColumnName] = useState("");
+    const [columns, setColumns] = useState([]); 
     const dispatch = useDispatch();
     const isGenerated = useSelector((state) => state?.employeeData?.generated);
 
@@ -40,22 +48,23 @@ const EmployeeTable = () => {
         }
     }, [isGenerated]);
 
+    useEffect(() => {
+        getData();
+    }, [limit, offset]);
+
     const getData = async () => {
         try {
             const response = await axios.get(
                 `${HOSTNAME}/getemployeedata?limit=${limit}&offset=${offset}`
             );
             setData(response.data);
-            dispatch(setEmployeeData(Object.keys(response.data[0]),true));
+            dispatch(setEmployeeData(Object.keys(response.data[0]), true));
+            setColumns(Object.keys(response.data[0]));
         } catch (error) {
             console.error("Error fetching data:", error);
             toast.error("Error fetching data");
         }
     };
-
-    useEffect(() => {
-        getData();
-    }, [limit, offset]);
 
     const nextPage = () => {
         setOffset(offset + limit);
@@ -65,18 +74,7 @@ const EmployeeTable = () => {
         if (offset - limit < 0) return;
         setOffset(offset - limit);
     };
-    const EmployeeDataEdit = async (row) => {
-        try {
-            const res = await axios.post(`${HOSTNAME}/updatedata`, { row });
 
-            dispatch(setUpdated(true));
-            getData();
-            toast(res.data.message);
-        } catch (error) {
-            console.log(error);
-        }
-        dispatch(setEditableData(row));
-    };
     const handleEdit = (row) => {
         dispatch(setEditableData(row));
         setShowModal(true);
@@ -103,16 +101,39 @@ const EmployeeTable = () => {
     const handleModalClose = () => {
         setShowModal(false);
     };
-    const saveEmployee=async(row)=>{
-        try{
-            const res=await axios.post(`${HOSTNAME}/saveemployee`,{row})
-            getData()        
+
+    const saveEmployee = async (row) => {
+        try {
+            const res = await axios.post(`${HOSTNAME}/saveemployee`, { row })
+            getData()
             toast("Data added successfully")
-        }catch(error){
-          toast("Something went wrong")
+        } catch (error) {
+            toast("Something went wrong")
             console.log(error)
         }
-       }
+    }
+
+    const handleAddColumn = () => {
+        setShowAddColumnModal(true);
+    };
+
+    const handleCloseAddColumnModal = () => {
+        setShowAddColumnModal(false);
+        setNewColumnName(""); 
+    };
+
+    const handleAddColumnSubmit = async () => {
+        try {
+            const addedColumnName = await axios.post(`${HOSTNAME}/addcolumn`, { columnName: newColumnName });
+            toast("Column added successfully");
+            setColumns([...columns, addedColumnName]);
+            setShowAddColumnModal(false);
+            setNewColumnName(""); 
+        } catch (error) {
+            toast("Something went wrong");
+            console.error("Error adding column:", error);
+        }
+    }
 
     return (
         <Container maxWidth="lg">
@@ -120,13 +141,30 @@ const EmployeeTable = () => {
                 <Typography variant="h5" component="div">Employee List</Typography>
                 <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={addEmployee}>Add Employee</Button>
             </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mb: 2 }}>
+                <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={handleAddColumn}>Add Column</Button>
+            </Box>
+            <Dialog open={showAddColumnModal} onClose={handleCloseAddColumnModal}>
+                <DialogTitle>Add New Column</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        label="Column Name"
+                        value={newColumnName}
+                        onChange={(e) => setNewColumnName(e.target.value)}
+                        fullWidth
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseAddColumnModal}>Cancel</Button>
+                    <Button onClick={handleAddColumnSubmit}>Add</Button>
+                </DialogActions>
+            </Dialog>
             <EditEmployeeModal
                 open={showModal}
                 handleClose={handleModalClose}
                 addEmployee={addEmployee}
-                handleSave={EmployeeDataEdit}
+                handleSave={saveEmployee}
                 toEdit={toEdit}
-                saveEmployee={saveEmployee}
             />
             <Box sx={{ overflowX: "auto" }}>
                 <Table>
@@ -134,20 +172,20 @@ const EmployeeTable = () => {
                         <>
                             <TableHead>
                                 <TableRow>
-                                    {Object.keys(data[0]).map((key) => (
-                                        <TableCell key={key}>
-                                            {key.toUpperCase()}
+                                    {columns.map((column) => (
+                                        <TableCell key={column}>
+                                            <Typography>{column}</Typography>
                                         </TableCell>
                                     ))}
                                     <TableCell>ACTIONS</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {data.map((row) => (
-                                    <TableRow key={row.id}>
-                                        {Object.keys(row).map((key) => (
-                                            <TableCell key={key}>
-                                                {row[key]}
+                                {data.map((row, index) => (
+                                    <TableRow key={index}>
+                                        {columns.map((column) => (
+                                            <TableCell key={column}>
+                                                {row[column]}
                                             </TableCell>
                                         ))}
                                         <TableCell>
@@ -161,9 +199,7 @@ const EmployeeTable = () => {
                                             <Button
                                                 variant="contained"
                                                 color="error"
-                                                onClick={() =>
-                                                    handleDelete(row["employeeid"])
-                                                }
+                                                onClick={() => handleDelete(row["employeeid"])}
                                             >
                                                 Delete
                                             </Button>
@@ -182,7 +218,6 @@ const EmployeeTable = () => {
                 </Grid>
             </Box>
             <Chart style={{ width: "80%", height: "80%" }} />
-
         </Container>
     );
 };
