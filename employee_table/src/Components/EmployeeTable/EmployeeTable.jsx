@@ -162,6 +162,7 @@ const EmployeeTable = () => {
             setColumns([...columns, addedColumnName]);
             setShowAddColumnModal(false);
             setNewColumnName("");
+            window.location.reload();
         } catch (error) {
             toast("Something went wrong");
             console.error("Error adding column:", error);
@@ -249,7 +250,7 @@ const EmployeeTable = () => {
                                             >
                                                 {typeof column === "string" ? (
                                                     <Typography variant="body1">
-                                                        {column.toUpperCase()}
+                                                        {column}
                                                     </Typography>
                                                 ) : (
                                                     column
