@@ -11,7 +11,7 @@ function Header() {
     const [open, setOpen] = useState(false);
 
     return (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: "1rem" ,position:"sticky",top:"0",zIndex:"1"}}>
             {open && <Insights />}
             <Paper sx={{ height: "4rem", width: '90%', margin: "auto", display: "flex", alignItems: "center" }}>
                 <Grid container justifyContent="flex-end" paddingRight={2}>
